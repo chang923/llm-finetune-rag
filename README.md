@@ -41,4 +41,28 @@ response:
 
 ### 3. RAG知识库接入
 
+这里实际上分为两个部分
+index.py和chat.py
+下面分别看这两个的内容
+index.py中是知识库嵌入的部分，即RAG中的index准备，这里使用了 reg 作为 embedding model，用作相似度检索，向量数据库使用了 chroma 数据库；用 bm25 retriever 进行关键词检索。
+首先是对数据分块，先用TextLoarer导入为documents，然后用CharacterTextSplitter转换为segments。
+首先是导入了 embedding 模型，然后通过其构建了数据库对应的 vectorstore，再调用 reg_retriever = vectorstore.as_retriever() 弄到存储检索
+之后就是使用了 bm25retriever，在这之中需要使用分词器，使用的是 jieba 分词器，首先需要定义分词函数preprocess_func(text): return list(jieba.cut(text))，为了在后续的使用中能调用这个关键词检索器，我们需要调用 pickle 进行保存，二进制保存，之后二进制读取(pickle.dump(bm25_retriever , f)/pickle.load(bm25_retriever , f))
 
+chat.py是增强生成部分的内容，首先是导入index.py中的向量数据库和关键词识别的bm25，这两个一个导入embedding，chroma；一个制作preprocess_func(text)，bm25_retriever。之后使用融合模型，给予其对应权重，采用平滑打分，x = 10
+
+接下来就是ChatPromptTemplate用来提示词构建，提示词包括system和human，第一个是模型人格固定用，第二个是提示词，里面有问题和检索的文本，{question}和{context}。这是要后面补充。
+模型调用，这里可以是之前微调的 api，ChatOpenAI符合open-ai格式，也可以是ChatDeepSeek调用deepseek，作为llm
+之后是循环输入问题，然后使用混合模型.invoke得到top-k，之后作为{question}和{context}来prompt.format_messages(question=user_input, context=context)
+调用ans = llm.invoke(prompt)
+输出ans.context即可
+
+### 4. 评价部分
+这部分在 retriever_evaluate.py 中，主要是评价“用户问题 -> TOP-K文本的好坏”
+这里面有四个评价标准：命中率，召回率，准确率，MMR
+命中率是有为1 没有为0
+召回率是 K中相关/所有相关
+准确率是 K中相关/K中所有
+MMR是 1/K中第一个相关的，没有的话为0
+使用了30条文本作为“问题：答案”对
+其中15条正向查询，15条反向查询，数据在“/劳动法/test_questions.jsonl”
