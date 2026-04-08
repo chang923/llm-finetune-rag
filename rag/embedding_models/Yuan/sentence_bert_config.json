@@ -1,0 +1,6 @@
+{
+  "max_seq_length": 512,
+  "do_lower_case": false,
+  "pooling_mode_mean_tokens": true,
+  "word_embedding_dimension": 1024
+}

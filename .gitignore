@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pth
+*.bin
+*.safetensors
+.env
+.DS_Store
+.vscode/
+logs/
+checkpoints/

@@ -1,0 +1,51 @@
+### model
+model_name_or_path: models/Qwen/Qwen3-4B-Instruct    #基座模型相对LLaMA-Factory目录的路径
+trust_remote_code: true
+
+### method
+stage: sft                                    #训练阶段(pt为预训练，dpo\ppo为强化学习，rm为奖励模型，sft为有监督微调)
+do_train: true                               #现在是在模型的训练阶段
+finetuning_type: lora                         #微调类型（全量微调，冻结微调lora微调）
+lora_rank: 8                                  #Lora分解的最高秩
+lora_target: all
+
+### dataset数据
+dataset: cat                             #数据集名称，需要提前配置好
+template: qwen                                #对话模板（Base模型任意，但是instruct阶段需要选用对应的模板）
+overwrite_cache: true                         #清空缓存（只在dataset变化时才会启用）
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output输出
+output_dir: saves/Qwen/Qwen3-4B-Instruct/lora/sft    #模型保存文件夹
+logging_steps: 10                             #进行多少次参数更新打印一次损失函数
+save_only_model: false                        
+report_to: none                               # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train调参
+learning_rate: 1.0e-4                         #学习率，梯度下降一步长度
+warmup_ratio: 0.1                             #学习率线性升高
+lr_scheduler_type: cosine                     #学习率余弦衰减
+max_samples: 1000                             #抽取多少数据量
+num_train_epochs: 1                           #训练多少轮次
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: /home/chang/llama-factory/LLaMA-Factory/saves/Qwen/Qwen3-4B-Instruct/lora/sft/checkpoint-50 #崩溃了用来传之前的检查点
+overwrite_output_dir: false                   #是否清空目录下的所有东西
+
+### 测试集参数
+# eval_dataset: alpaca_en_demo                #测试数据集（可以不设置，认为从训练集中抽val_size的比例）
+val_size: 0.1                                 #数据集中抽取多少
+per_device_eval_batch_size: 1                 #并发测试量
+eval_strategy: steps                          #按照什么方式评估
+eval_steps: 50                                #更新多少次参数进行一次评估  
+save_steps: 50                                #更新多少次参数进行一次保存
+
+
+### 控制显存
+cutoff_len: 4096                              #样本长度截断
+per_device_train_batch_size: 1                #一次训练一个gpu放入几条样本（显存空间）
+gradient_accumulation_steps: 8                #经过多少次前后向传播进行一次参数更新（时间）
+
+### 图像
+plot_loss: true

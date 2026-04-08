@@ -1,0 +1,12 @@
+model_name_or_path: models/Qwen/Qwen3-4B-Instruct
+#adapter_name_or_path: saves/Qwen/Qwen3-4B-Instruct/lora/sft
+template: qwen
+infer_backend: huggingface  # choices: [huggingface, vllm, sglang, ktransformers]
+trust_remote_code: true
+
+#对话测试回复配置
+temperature: 0.7            #注意力机制softmax中的T（越大生成词概率越平均）
+repetition_penalty: 1.2     #重复词语（>1表示生成重复词有惩罚，<1表示鼓励生成重复词语）
+max_new_tokens: 512         #最大回复文本长度
+
+quantization_bit: 4
